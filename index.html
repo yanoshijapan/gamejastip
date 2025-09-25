@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gudang Jatuh V2</title>
+    <title>Gudang Jatuh V2.1</title>
     <style>
-        /* CSS untuk Tampilan dan Responsivitas */
         :root {
             --primary-bg: #ffffff;
             --secondary-bg: #f0f0f0;
@@ -15,149 +14,65 @@
             --accent-hover: #0056b3;
             --danger-color: #dc3545;
         }
-
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--secondary-bg);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; padding: 0; background-color: var(--secondary-bg); color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex;
+            justify-content: center; align-items: center; height: 100vh; overflow: hidden;
         }
-
         #game-container {
-            width: 100%;
-            max-width: 400px;
-            aspect-ratio: 9 / 16;
-            position: relative;
-            background-color: var(--primary-bg);
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
+            width: 100%; max-width: 400px; aspect-ratio: 9 / 16; position: relative;
+            background-color: var(--primary-bg); border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+            overflow: hidden; border: 1px solid var(--border-color);
         }
-
         #info-bar {
-            padding: 10px;
-            text-align: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            background-color: var(--primary-bg);
-            border-bottom: 2px solid var(--border-color);
-            flex-shrink: 0; /* Mencegah bar ini menyusut */
+            padding: 10px; text-align: center; font-size: 1.5em; font-weight: bold;
+            background-color: var(--primary-bg); border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
         }
-        
-        #score-display::before {
-            content: 'Skor: ';
-        }
-
-        /* Wrapper untuk canvas menempati 85% sisa ruang */
-        #canvas-wrapper {
-            height: 85%;
-            width: 100%;
-            background-color: #f9f9f9;
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        /* Kontrol menempati 15% sisa ruang */
+        #score-display::before { content: 'Skor: '; }
+        #canvas-wrapper { height: 85%; width: 100%; background-color: #f9f9f9; }
+        canvas { width: 100%; height: 100%; display: block; }
         #controls {
-            height: 15%;
-            width: 100%;
-            background-color: var(--secondary-bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 15%; width: 100%; background-color: var(--secondary-bg);
+            display: flex; justify-content: center; align-items: center;
             border-top: 2px solid var(--border-color);
         }
-
         #drop-button {
-            padding: 15px 50px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: white;
-            background-color: var(--accent-color);
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
+            padding: 15px 50px; font-size: 1.5em; font-weight: bold; color: white;
+            background-color: var(--accent-color); border: none; border-radius: 12px;
+            cursor: pointer; transition: background-color 0.3s, transform 0.1s;
         }
-        #drop-button:hover {
-            background-color: var(--accent-hover);
-        }
-        #drop-button:active {
-            transform: scale(0.95);
-        }
-        #drop-button:disabled {
-            background-color: #999;
-            cursor: not-allowed;
-        }
-
+        #drop-button:hover { background-color: var(--accent-hover); }
+        #drop-button:active { transform: scale(0.95); }
+        #drop-button:disabled { background-color: #999; cursor: not-allowed; }
         .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: var(--text-color);
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+            color: var(--text-color); z-index: 10;
         }
-        
         .overlay h1 { font-size: 2.5em; margin-bottom: 20px; }
         .overlay p { font-size: 1.2em; margin-bottom: 30px; }
-
         .button {
-            padding: 15px 30px;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #fff;
-            background-color: var(--danger-color);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            padding: 15px 30px; font-size: 1.2em; font-weight: bold; color: #fff;
+            background-color: var(--danger-color); border: none; border-radius: 10px;
+            cursor: pointer; transition: background-color 0.3s;
         }
         .button:hover { background-color: #c82333; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
-
     <div id="game-container">
-        <div id="info-bar">
-            <span id="score-display">0</span>
-        </div>
-        
-        <div id="canvas-wrapper">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-
-        <div id="controls">
-            <button id="drop-button">JATUHKAN</button>
-        </div>
-
+        <div id="info-bar"><span id="score-display">0</span></div>
+        <div id="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
+        <div id="controls"><button id="drop-button">JATUHKAN</button></div>
         <div id="start-screen" class="overlay">
-            <h1>Gudang Jatuh V2</h1>
+            <h1>Gudang Jatuh V2.1</h1>
             <p>Atur posisi barang, lalu jatuhkan untuk menggabungkannya!</p>
             <button id="start-button" class="button" style="background-color: #28a745;">Mulai Game</button>
         </div>
-
         <div id="game-over-screen" class="overlay hidden">
             <h1>Game Over</h1>
             <p>Skor Akhir: <span id="final-score">0</span></p>
@@ -166,10 +81,10 @@
     </div>
 
     <script>
+        // --- Elemen UI ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const dropButton = document.getElementById('drop-button');
-        // ... (elemen UI lainnya)
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const startButton = document.getElementById('start-button');
@@ -177,64 +92,65 @@
         const scoreDisplay = document.getElementById('score-display');
         const finalScoreDisplay = document.getElementById('final-score');
 
+        // --- Pengaturan Game ---
         const COLS = 10;
         let ROWS, BLOCK_SIZE;
-
-        function setCanvasDimensions() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            canvas.width = wrapper.offsetWidth;
-            canvas.height = wrapper.offsetHeight;
-            BLOCK_SIZE = canvas.width / COLS;
-            ROWS = Math.floor(canvas.height / BLOCK_SIZE);
-        }
-
         const ITEMS = { EMPTY: 0, BOX: 1, KOPER: 2, PESAWAT: 3 };
 
-        /**************************************************/
-        /* --- GANTI URL GAMBAR BARANG ANDA DI SINI --- */
-        /**************************************************/
+        /******************************************************************/
+        /* PASTIKAN URL GAMBAR DI BAWAH INI BISA DIAKSES                  */
+        /* GANTI DENGAN URL GAMBAR ANDA YANG VALID                        */
+        /******************************************************************/
         const ITEM_PROPS = {
             [ITEMS.BOX]:     { src: 'https://yanoshijapan.github.io/asetonline/dus.png', img: null },
             [ITEMS.KOPER]:   { src: 'https://yanoshijapan.github.io/asetonline/ckoper.png', img: null },
             [ITEMS.PESAWAT]: { src: 'https://yanoshijapan.github.io/asetonline/pesawat.png', img: null }
         };
-        // URL di atas adalah contoh. Gunakan URL gambar Anda sendiri.
 
-        let imagesLoaded = 0;
+        /**************************************************/
+        /* --- KODE PERBAIKAN ADA DI FUNGSI INI --- */
+        /**************************************************/
         function loadImages(callback) {
             const totalImages = Object.keys(ITEM_PROPS).length;
+            let loadedCount = 0;
+
+            // Fungsi ini akan dipanggil setiap kali gambar selesai dimuat ATAU gagal dimuat
+            const onImageLoadOrError = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    console.log("Semua aset selesai diproses.");
+                    callback(); // Jalankan callback (aktifkan tombol start)
+                }
+            };
+
             for(const key in ITEM_PROPS) {
                 const item = ITEM_PROPS[key];
                 item.img = new Image();
+                item.img.crossOrigin = "Anonymous"; // Membantu mencegah beberapa error CORS
                 item.img.src = item.src;
-                item.img.onload = () => {
-                    imagesLoaded++;
-                    if (imagesLoaded === totalImages) {
-                        callback(); // Jalankan game setelah semua gambar dimuat
-                    }
-                }
-                item.img.onerror = () => { console.error(`Gagal memuat gambar: ${item.src}`); }
+                item.img.onload = onImageLoadOrError; // Jika berhasil
+                item.img.onerror = () => { // Jika gagal
+                    console.error(`Gagal memuat gambar: ${item.src}. Permainan akan tetap berjalan.`);
+                    onImageLoadOrError(); // Tetap panggil fungsi agar tidak macet
+                };
             }
         }
         
-        // Variabel Status Game
+        // --- Variabel Status Game ---
         let grid, currentItem, score, isGameOver, isDropping;
         let animationFrameId;
 
+        // --- Class & Fungsi Inti ---
         class Item {
             constructor(type, x, y) {
-                this.type = type;
-                this.x = x;
-                this.y = y;
+                this.type = type; this.x = x; this.y = y;
             }
         }
         
         function init() {
             setCanvasDimensions();
             grid = Array.from({ length: ROWS }, () => Array(COLS).fill(ITEMS.EMPTY));
-            score = 0;
-            isGameOver = false;
-            isDropping = false;
+            score = 0; isGameOver = false; isDropping = false;
             scoreDisplay.textContent = score;
             dropButton.disabled = false;
             spawnNewItem();
@@ -244,76 +160,47 @@
 
         function spawnNewItem() {
             const randomType = Math.floor(Math.random() * 3) + 1;
-            const startX = Math.floor(COLS / 2);
-            currentItem = new Item(randomType, startX, 0);
-
-            if (checkCollision(currentItem.x, currentItem.y)) {
-                isGameOver = true;
-            }
+            currentItem = new Item(randomType, Math.floor(COLS / 2), 0);
+            if (checkCollision(currentItem.x, currentItem.y)) isGameOver = true;
         }
         
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.strokeStyle = var(--danger-color);
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(0, BLOCK_SIZE);
-            ctx.lineTo(canvas.width, BLOCK_SIZE);
-            ctx.stroke();
-
+            ctx.strokeStyle = '#dc3545'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(0, BLOCK_SIZE); ctx.lineTo(canvas.width, BLOCK_SIZE); ctx.stroke();
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
-                    if (grid[r][c] !== ITEMS.EMPTY) {
-                        drawBlock(c, r, grid[r][c]);
-                    }
+                    if (grid[r][c] !== ITEMS.EMPTY) drawBlock(c, r, grid[r][c]);
                 }
             }
-
-            if (currentItem && !isGameOver) {
-                drawBlock(currentItem.x, currentItem.y, currentItem.type);
-            }
+            if (currentItem && !isGameOver) drawBlock(currentItem.x, currentItem.y, currentItem.type);
         }
 
         function drawBlock(x, y, type) {
             const props = ITEM_PROPS[type];
-            if (!props || !props.img || !props.img.complete) return;
-            // Gambar menggunakan ctx.drawImage
-            ctx.drawImage(props.img, x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            if (props && props.img && props.img.complete && props.img.naturalHeight !== 0) {
+                ctx.drawImage(props.img, x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            } else { // Fallback jika gambar gagal dimuat
+                ctx.fillStyle = '#ccc';
+                ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+            }
         }
         
         function dropItem() {
             if (isDropping || isGameOver) return;
-            isDropping = true;
-            dropButton.disabled = true;
-
-            function animateDrop() {
-                // Hapus item dari posisi lama (tidak perlu jika seluruh canvas di-redraw)
-                
-                let landed = false;
-                // Jatuhkan sampai mentok
-                while (!checkCollision(currentItem.x, currentItem.y + 1)) {
-                    currentItem.y++;
-                }
-                landed = true;
-
-                if (landed) {
-                    solidifyItem();
-                    checkMerges();
-                    spawnNewItem();
-                    isDropping = false;
-                    dropButton.disabled = isGameOver;
-                    draw(); // Langsung gambar keadaan akhir
-                }
+            isDropping = true; dropButton.disabled = true;
+            while (!checkCollision(currentItem.x, currentItem.y + 1)) {
+                currentItem.y++;
             }
-            // Untuk animasi "halus", bisa gunakan requestAnimationFrame.
-            // Tapi untuk "cepat", logika di atas sudah cukup.
-            animateDrop(); 
+            solidifyItem();
+            checkMerges();
+            spawnNewItem();
+            isDropping = false;
+            dropButton.disabled = isGameOver;
+            draw();
         }
 
         function gameLoop() {
-            // Game loop tidak lagi menjatuhkan barang secara otomatis
-            // Hanya menggambar ulang
             if (!isGameOver) {
                 draw();
                 animationFrameId = requestAnimationFrame(gameLoop);
@@ -328,18 +215,16 @@
             dropButton.disabled = true;
         }
 
-        // Fungsi checkCollision, solidifyItem, dan checkMerges tetap sama
         function checkCollision(x, y) {
             if (x < 0 || x >= COLS || y >= ROWS) return true;
-            if (grid[y] && grid[y][x] !== ITEMS.EMPTY) return true;
-            return false;
+            return grid[y] && grid[y][x] !== ITEMS.EMPTY;
         }
+
         function solidifyItem() {
-            if (currentItem.y < ROWS) {
-                grid[currentItem.y][currentItem.x] = currentItem.type;
-            }
+            if (currentItem.y < ROWS) grid[currentItem.y][currentItem.x] = currentItem.type;
             if (currentItem.y < 1) isGameOver = true;
         }
+
         function checkMerges() {
             for (let r = ROWS - 1; r > 0; r--) {
                 for (let c = 0; c < COLS; c++) {
@@ -354,24 +239,21 @@
                         } else if (currentType === ITEMS.PESAWAT) {
                             score += 25;
                             for (let row = r; row > 1; row--) { grid[row][c] = grid[row - 2] ? grid[row - 2][c] : ITEMS.EMPTY; }
-                            grid[0][c] = ITEMS.EMPTY; grid[1][c] = ITEMS.EMPTY;
-                            merged = true;
+                            grid[0][c] = ITEMS.EMPTY; grid[1][c] = ITEMS.EMPTY; merged = true;
                         }
                         if (merged) {
-                            if (currentType !== ITEMS.PESAWAT) { // Untuk Box & Koper, geser 1
-                               for (let row = r - 1; row > 0; row--) { grid[row][c] = grid[row - 1][c]; }
+                            if (currentType !== ITEMS.PESAWAT) {
+                                for (let row = r - 1; row > 0; row--) { grid[row][c] = grid[row - 1][c]; }
                                 grid[0][c] = ITEMS.EMPTY;
                             }
-                            scoreDisplay.textContent = score;
-                            return checkMerges();
+                            scoreDisplay.textContent = score; return checkMerges();
                         }
                     }
                 }
             }
         }
-        // ... (Fungsi-fungsi lama disederhanakan di sini)
-
-        // Kontrol Geser (Touch & Mouse)
+        
+        // --- Kontrol & Event Listeners ---
         function handleMove(event) {
             if (!currentItem || isGameOver || isDropping) return;
             const rect = canvas.getBoundingClientRect();
@@ -379,17 +261,13 @@
             const x = clientX - rect.left;
             let newCol = Math.floor(x / BLOCK_SIZE);
             newCol = Math.max(0, Math.min(COLS - 1, newCol));
-            if (!checkCollision(newCol, currentItem.y)) {
-                currentItem.x = newCol;
-            }
-            // Tidak perlu memanggil draw() di sini karena gameLoop sudah melakukannya
+            if (!checkCollision(newCol, currentItem.y)) currentItem.x = newCol;
         }
         canvas.addEventListener('mousedown', (e) => handleMove(e));
         canvas.addEventListener('mousemove', (e) => { if(e.buttons === 1) handleMove(e); });
         canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
         canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
 
-        // Tombol-tombol
         dropButton.addEventListener('click', dropItem);
         startButton.addEventListener('click', () => {
             startScreen.classList.add('hidden');
@@ -401,18 +279,13 @@
         });
         
         window.addEventListener('resize', init);
-        
-        // Memuat gambar terlebih dahulu, baru memulai permainan
         window.addEventListener('load', () => {
-            startButton.textContent = "Memuat Aset...";
-            startButton.disabled = true;
+            startButton.textContent = "Memuat Aset..."; startButton.disabled = true;
             loadImages(() => {
-                startButton.textContent = "Mulai Game";
-                startButton.disabled = false;
+                startButton.textContent = "Mulai Game"; startButton.disabled = false;
                 setCanvasDimensions();
             });
         });
     </script>
-
 </body>
 </html>
