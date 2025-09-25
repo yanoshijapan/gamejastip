@@ -92,13 +92,13 @@
 
         // --- Aset Gambar (PENTING: Ganti URL ini dengan gambar Anda sendiri!) ---
         const playerImg = new Image();
-        playerImg.src = 'https://i.ibb.co/bFmd1jW/woman-walking.png'; // Ganti dengan gambar wanita Anda
+        playerImg.src = 'https://yanoshijapan.github.io/asetonline/ckoper.png'; // Ganti dengan gambar wanita Anda
 
         const boxImg = new Image();
-        boxImg.src = 'https://i.ibb.co/VvzYn2Q/boxes.png'; // Ganti dengan gambar tumpukan kardus
+        boxImg.src = 'https://yanoshijapan.github.io/asetonline/dus.png'; // Ganti dengan gambar tumpukan kardus
 
         const planeImg = new Image();
-        planeImg.src = 'https://i.ibb.co/K7cT3Yy/plane.png'; // Ganti dengan gambar pesawat
+        planeImg.src = 'https://yanoshijapan.github.io/asetonline/pesawat.png'; // Ganti dengan gambar pesawat
 
         // --- Objek Player ---
         const player = {
@@ -106,16 +106,22 @@
             y: canvas.height - GROUND_HEIGHT - 60,
             width: 70,  // Sesuaikan ukuran
             height: 100, // Sesuaikan ukuran
+			speed: 5, // Tambahkan ini
+			velocityX: 0,
             velocityY: 0,
             onGround: true,
             draw() {
                 ctx.drawImage(playerImg, this.x, this.y, this.width, this.height);
             },
             update() {
+				this.x += this.velocityX;
                 this.velocityY += GRAVITY;
                 this.y += this.velocityY;
 
                 // Mencegah jatuh melewati tanah
+				if (this.x < 0) {
+					this.x = 0;
+				}
                 if (this.y > canvas.height - GROUND_HEIGHT - this.height) {
                     this.y = canvas.height - GROUND_HEIGHT - this.height;
                     this.velocityY = 0;
@@ -244,15 +250,32 @@
 
         // --- Event Listener ---
         window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !isGameOver) {
-                player.jump();
-            }
-        });
+			switch(e.code) {
+				case 'Space':
+				case 'ArrowUp': // Tambahkan panah atas untuk melompat
+					if (!isGameOver) player.jump();
+					break;
+				case 'ArrowRight':
+					player.velocityX = player.speed;
+					break;
+				case 'ArrowLeft':
+					player.velocityX = -player.speed;
+					break;
+			}
+		});
 
+		window.addEventListener('keyup', (e) => {
+			switch(e.code) {
+				case 'ArrowRight':
+				case 'ArrowLeft':
+					player.velocityX = 0; // Berhenti bergerak saat tombol dilepas
+					break;
+			}
+		});
         // Juga berfungsi dengan klik mouse atau sentuhan
         canvas.addEventListener('mousedown', () => {
-            if (!isGameOver) player.jump();
-        });
+			if (!isGameOver) player.jump();
+		});
 
         restartButton.addEventListener('click', startGame);
 
