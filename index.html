@@ -19,27 +19,42 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex;
             justify-content: center; align-items: center; height: 100vh; overflow: hidden;
         }
+    
+        /* --- MULAI MODIFIKASI DI SINI --- */
+        @keyframes animateGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    
         #game-container {
             width: 100%; max-width: 400px; aspect-ratio: 9 / 16; position: relative;
+            
+            /* Latar belakang gradasi animasi */
             background: linear-gradient(45deg, #e6f7ff, #fdf8e1, #e6f7ff, #fdf8e1);
             background-size: 400% 400%;
             animation: animateGradient 15s ease infinite;
+            
             border-radius: 15px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column;
             overflow: hidden; border: 1px solid var(--border-color);
         }
+        /* --- AKHIR MODIFIKASI --- */
+    
         #info-bar {
             padding: 10px; text-align: center; font-size: 1.5em; font-weight: bold;
-            background-color: var(--primary-bg); border-bottom: 2px solid var(--border-color);
+            background-color: transparent; /* Ubah agar transparan */ 
+            border-bottom: 2px solid var(--border-color);
             flex-shrink: 0;
         }
         #score-display::before { content: 'Skor: '; }
-        #canvas-wrapper { height: 85%; width: 100%; background-color: #f9f9f9; }
+        #canvas-wrapper { height: 85%; width: 100%; background-color: transparent; } /* Ubah agar transparan */
         canvas { width: 100%; height: 100%; display: block; }
         #controls {
-            height: 15%; width: 100%; background-color: var(--secondary-bg);
+            height: 15%; width: 100%; background-color: rgba(240, 240, 240, 0.7); /* Beri sedikit transparansi */
             display: flex; justify-content: center; align-items: center;
             border-top: 2px solid var(--border-color);
+            backdrop-filter: blur(4px); /* Efek blur (opsional, tapi keren) */
         }
         #drop-button {
             padding: 15px 50px; font-size: 1.5em; font-weight: bold; color: white;
@@ -54,9 +69,10 @@
             background-color: rgba(255, 255, 255, 0.8); display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
             color: var(--text-color); z-index: 10;
+            backdrop-filter: blur(4px); /* Efek blur (opsional, tapi keren) */
         }
-        .overlay h1 { font-size: 2.0em; margin-bottom: 20px; }
-        .overlay p { font-size: 0.8em; margin-bottom: 30px; }
+        .overlay h1 { font-size: 2.5em; margin-bottom: 20px; }
+        .overlay p { font-size: 1.2em; margin-bottom: 30px; }
         .button {
             padding: 15px 30px; font-size: 1.2em; font-weight: bold; color: #fff;
             background-color: var(--danger-color); border: none; border-radius: 10px;
@@ -64,11 +80,6 @@
         }
         .button:hover { background-color: #c82333; }
         .hidden { display: none; }
-        @keyframes animateGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
     </style>
 </head>
 <body>
