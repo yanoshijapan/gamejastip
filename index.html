@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gudang Jatuh V2.1</title>
+    <title>Gudang Jatuh V2.2</title>
     <style>
         :root {
             --primary-bg: #ffffff;
@@ -69,7 +69,7 @@
         <div id="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
         <div id="controls"><button id="drop-button">JATUHKAN</button></div>
         <div id="start-screen" class="overlay">
-            <h1>Gudang Jatuh V2.1</h1>
+            <h1>Gudang Jatuh V2.2</h1>
             <p>Atur posisi barang, lalu jatuhkan untuk menggabungkannya!</p>
             <button id="start-button" class="button" style="background-color: #28a745;">Mulai Game</button>
         </div>
@@ -98,40 +98,42 @@
         const ITEMS = { EMPTY: 0, BOX: 1, KOPER: 2, PESAWAT: 3 };
 
         /******************************************************************/
-        /* PASTIKAN URL GAMBAR DI BAWAH INI BISA DIAKSES                  */
-        /* GANTI DENGAN URL GAMBAR ANDA YANG VALID                        */
+        /* --- FUNGSI YANG HILANG DAN KINI DITAMBAHKAN KEMBALI --- */
         /******************************************************************/
+        function setCanvasDimensions() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            // Set resolusi internal canvas agar sesuai dengan ukuran tampilannya
+            canvas.width = wrapper.offsetWidth;
+            canvas.height = wrapper.offsetHeight;
+            // Hitung ulang ukuran balok dan jumlah baris
+            BLOCK_SIZE = canvas.width / COLS;
+            ROWS = Math.floor(canvas.height / BLOCK_SIZE);
+        }
+
         const ITEM_PROPS = {
             [ITEMS.BOX]:     { src: 'https://yanoshijapan.github.io/asetonline/dus.png', img: null },
             [ITEMS.KOPER]:   { src: 'https://yanoshijapan.github.io/asetonline/ckoper.png', img: null },
             [ITEMS.PESAWAT]: { src: 'https://yanoshijapan.github.io/asetonline/pesawat.png', img: null }
         };
 
-        /**************************************************/
-        /* --- KODE PERBAIKAN ADA DI FUNGSI INI --- */
-        /**************************************************/
         function loadImages(callback) {
             const totalImages = Object.keys(ITEM_PROPS).length;
             let loadedCount = 0;
-
-            // Fungsi ini akan dipanggil setiap kali gambar selesai dimuat ATAU gagal dimuat
             const onImageLoadOrError = () => {
                 loadedCount++;
                 if (loadedCount === totalImages) {
-                    console.log("Semua aset selesai diproses.");
-                    callback(); // Jalankan callback (aktifkan tombol start)
+                    callback();
                 }
             };
-
             for(const key in ITEM_PROPS) {
                 const item = ITEM_PROPS[key];
                 item.img = new Image();
-                item.img.crossOrigin = "Anonymous"; // Membantu mencegah beberapa error CORS
+                item.img.crossOrigin = "Anonymous";
                 item.img.src = item.src;
-                item.img.onload = onImageLoadOrError; // Jika berhasil
-                item.img.onerror = () => { // Jika gagal
-                    console.error(`Gagal memuat gambar: ${item.src}. Permainan akan tetap berjalan.`);
-                    onImageLoadOrError(); // Tetap panggil fungsi agar tidak macet
+                item.img.onload = onImageLoadOrError;
+                item.img.onerror = () => {
+                    console.error(`Gagal memuat gambar: ${item.src}.`);
+                    onImageLoadOrError();
                 };
             }
         }
@@ -142,13 +144,11 @@
 
         // --- Class & Fungsi Inti ---
         class Item {
-            constructor(type, x, y) {
-                this.type = type; this.x = x; this.y = y;
-            }
+            constructor(type, x, y) { this.type = type; this.x = x; this.y = y; }
         }
         
         function init() {
-            setCanvasDimensions();
+            setCanvasDimensions(); // Panggilan ini sekarang akan berhasil
             grid = Array.from({ length: ROWS }, () => Array(COLS).fill(ITEMS.EMPTY));
             score = 0; isGameOver = false; isDropping = false;
             scoreDisplay.textContent = score;
@@ -180,14 +180,14 @@
             const props = ITEM_PROPS[type];
             if (props && props.img && props.img.complete && props.img.naturalHeight !== 0) {
                 ctx.drawImage(props.img, x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-            } else { // Fallback jika gambar gagal dimuat
+            } else {
                 ctx.fillStyle = '#ccc';
                 ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
             }
         }
         
         function dropItem() {
-            if (isDropping || isGameOver) return;
+            if (isDropping || isGameOver || !currentItem) return; // Penambahan !currentItem untuk keamanan
             isDropping = true; dropButton.disabled = true;
             while (!checkCollision(currentItem.x, currentItem.y + 1)) {
                 currentItem.y++;
