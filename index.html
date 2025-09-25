@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gudang Jatuh V2.2</title>
+    <title>Gudang Jatuh V2.3</title>
     <style>
         :root {
             --primary-bg: #ffffff;
@@ -69,7 +69,7 @@
         <div id="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
         <div id="controls"><button id="drop-button">JATUHKAN</button></div>
         <div id="start-screen" class="overlay">
-            <h1>Gudang Jatuh V2.2</h1>
+            <h1>Gudang Jatuh V2.3</h1>
             <p>Atur posisi barang, lalu jatuhkan untuk menggabungkannya!</p>
             <button id="start-button" class="button" style="background-color: #28a745;">Mulai Game</button>
         </div>
@@ -93,19 +93,17 @@
         const finalScoreDisplay = document.getElementById('final-score');
 
         // --- Pengaturan Game ---
-        const COLS = 10;
+        /******************************************************************/
+        /* --- PERUBAHAN 1: MENGURANGI JUMLAH KOLOM AGAR GAMBAR BESAR --- */
+        /******************************************************************/
+        const COLS = 7;
         let ROWS, BLOCK_SIZE;
         const ITEMS = { EMPTY: 0, BOX: 1, KOPER: 2, PESAWAT: 3 };
 
-        /******************************************************************/
-        /* --- FUNGSI YANG HILANG DAN KINI DITAMBAHKAN KEMBALI --- */
-        /******************************************************************/
         function setCanvasDimensions() {
             const wrapper = document.getElementById('canvas-wrapper');
-            // Set resolusi internal canvas agar sesuai dengan ukuran tampilannya
             canvas.width = wrapper.offsetWidth;
             canvas.height = wrapper.offsetHeight;
-            // Hitung ulang ukuran balok dan jumlah baris
             BLOCK_SIZE = canvas.width / COLS;
             ROWS = Math.floor(canvas.height / BLOCK_SIZE);
         }
@@ -148,7 +146,7 @@
         }
         
         function init() {
-            setCanvasDimensions(); // Panggilan ini sekarang akan berhasil
+            setCanvasDimensions();
             grid = Array.from({ length: ROWS }, () => Array(COLS).fill(ITEMS.EMPTY));
             score = 0; isGameOver = false; isDropping = false;
             scoreDisplay.textContent = score;
@@ -186,21 +184,63 @@
             }
         }
         
+        /******************************************************************/
+        /* --- PERUBAHAN 2: FUNGSI JATUH DENGAN ANIMASI HALUS --- */
+        /******************************************************************/
         function dropItem() {
-            if (isDropping || isGameOver || !currentItem) return; // Penambahan !currentItem untuk keamanan
-            isDropping = true; dropButton.disabled = true;
-            while (!checkCollision(currentItem.x, currentItem.y + 1)) {
-                currentItem.y++;
+            if (isDropping || isGameOver || !currentItem) return;
+            isDropping = true;
+            dropButton.disabled = true;
+
+            let dropAnimationFrame;
+            
+            // Simpan posisi pixel aktual untuk animasi halus
+            let currentPixelY = currentItem.y * BLOCK_SIZE;
+            
+            // Kecepatan jatuh dalam pixel per frame. Bisa diubah untuk lebih cepat/lambat.
+            const dropSpeed = BLOCK_SIZE / 2; 
+
+            function animateDrop() {
+                // Hentikan loop utama agar tidak ada gambar ganda
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+                // Perbarui posisi pixel
+                currentPixelY += dropSpeed;
+                
+                // Konversi posisi pixel kembali ke baris (grid)
+                const nextGridY = Math.floor((currentPixelY + BLOCK_SIZE -1) / BLOCK_SIZE);
+
+                // Cek tabrakan di baris berikutnya
+                if (checkCollision(currentItem.x, nextGridY)) {
+                    // Mendarat!
+                    currentItem.y = nextGridY - 1; // Set posisi grid final
+                    solidifyItem();
+                    checkMerges();
+                    spawnNewItem();
+                    
+                    isDropping = false;
+                    dropButton.disabled = isGameOver;
+                    
+                    // Batalkan animasi jatuh dan mulai kembali loop game utama
+                    cancelAnimationFrame(dropAnimationFrame);
+                    gameLoop(); 
+                    return;
+                }
+                
+                // Jika belum mendarat, gambar item di posisi pixel yang baru
+                currentItem.y = currentPixelY / BLOCK_SIZE; // Update posisi float untuk digambar
+                draw(); // Gambar ulang seluruh scene
+                
+                // Lanjutkan ke frame berikutnya
+                dropAnimationFrame = requestAnimationFrame(animateDrop);
             }
-            solidifyItem();
-            checkMerges();
-            spawnNewItem();
-            isDropping = false;
-            dropButton.disabled = isGameOver;
-            draw();
+
+            animateDrop();
         }
 
         function gameLoop() {
+            if(isDropping) return; // Jangan lakukan apa-apa jika sedang animasi jatuh
+
             if (!isGameOver) {
                 draw();
                 animationFrameId = requestAnimationFrame(gameLoop);
