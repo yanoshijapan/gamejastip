@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gudang Jatuh V2.3</title>
+    <title>Gudang Jatuh V2.4</title>
     <style>
         :root {
             --primary-bg: #ffffff;
@@ -69,7 +69,7 @@
         <div id="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
         <div id="controls"><button id="drop-button">JATUHKAN</button></div>
         <div id="start-screen" class="overlay">
-            <h1>Gudang Jatuh V2.3</h1>
+            <h1>Gudang Jatuh V2.4</h1>
             <p>Atur posisi barang, lalu jatuhkan untuk menggabungkannya!</p>
             <button id="start-button" class="button" style="background-color: #28a745;">Mulai Game</button>
         </div>
@@ -93,10 +93,7 @@
         const finalScoreDisplay = document.getElementById('final-score');
 
         // --- Pengaturan Game ---
-        /******************************************************************/
-        /* --- PERUBAHAN 1: MENGURANGI JUMLAH KOLOM AGAR GAMBAR BESAR --- */
-        /******************************************************************/
-        const COLS = 7;
+        const COLS = 4;
         let ROWS, BLOCK_SIZE;
         const ITEMS = { EMPTY: 0, BOX: 1, KOPER: 2, PESAWAT: 3 };
 
@@ -139,6 +136,9 @@
         // --- Variabel Status Game ---
         let grid, currentItem, score, isGameOver, isDropping;
         let animationFrameId;
+        
+        // --- BARU: Array untuk menyimpan skor yang beranimasi ---
+        let floatingScores = [];
 
         // --- Class & Fungsi Inti ---
         class Item {
@@ -149,6 +149,7 @@
             setCanvasDimensions();
             grid = Array.from({ length: ROWS }, () => Array(COLS).fill(ITEMS.EMPTY));
             score = 0; isGameOver = false; isDropping = false;
+            floatingScores = []; // Kosongkan array saat game baru
             scoreDisplay.textContent = score;
             dropButton.disabled = false;
             spawnNewItem();
@@ -172,7 +173,35 @@
                 }
             }
             if (currentItem && !isGameOver) drawBlock(currentItem.x, currentItem.y, currentItem.type);
+
+            // --- BARU: Panggil fungsi untuk menggambar skor animasi ---
+            handleFloatingScores();
         }
+
+        // --- BARU: Fungsi untuk menangani logika dan penggambaran skor animasi ---
+        function handleFloatingScores() {
+            // Kita akan memproses array dari belakang agar aman saat menghapus elemen
+            for (let i = floatingScores.length - 1; i >= 0; i--) {
+                const fs = floatingScores[i];
+
+                // Update posisi & transparansi
+                fs.y -= 0.5; // Bergerak ke atas
+                fs.lifetime--;
+                fs.alpha = fs.lifetime / 60; // 60 adalah durasi awal
+
+                // Gambar teks skor
+                ctx.font = `bold ${BLOCK_SIZE * 0.5}px Arial`;
+                ctx.fillStyle = `rgba(76, 175, 80, ${fs.alpha})`; // Warna hijau
+                ctx.textAlign = 'center';
+                ctx.fillText(fs.text, fs.x, fs.y);
+
+                // Hapus dari array jika sudah tidak terlihat
+                if (fs.lifetime <= 0) {
+                    floatingScores.splice(i, 1);
+                }
+            }
+        }
+
 
         function drawBlock(x, y, type) {
             const props = ITEM_PROPS[type];
@@ -184,63 +213,39 @@
             }
         }
         
-        /******************************************************************/
-        /* --- PERUBAHAN 2: FUNGSI JATUH DENGAN ANIMASI HALUS --- */
-        /******************************************************************/
         function dropItem() {
             if (isDropping || isGameOver || !currentItem) return;
             isDropping = true;
             dropButton.disabled = true;
 
             let dropAnimationFrame;
-            
-            // Simpan posisi pixel aktual untuk animasi halus
             let currentPixelY = currentItem.y * BLOCK_SIZE;
-            
-            // Kecepatan jatuh dalam pixel per frame. Bisa diubah untuk lebih cepat/lambat.
             const dropSpeed = BLOCK_SIZE / 2; 
 
             function animateDrop() {
-                // Hentikan loop utama agar tidak ada gambar ganda
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-                // Perbarui posisi pixel
                 currentPixelY += dropSpeed;
-                
-                // Konversi posisi pixel kembali ke baris (grid)
                 const nextGridY = Math.floor((currentPixelY + BLOCK_SIZE -1) / BLOCK_SIZE);
-
-                // Cek tabrakan di baris berikutnya
                 if (checkCollision(currentItem.x, nextGridY)) {
-                    // Mendarat!
-                    currentItem.y = nextGridY - 1; // Set posisi grid final
+                    currentItem.y = nextGridY - 1;
                     solidifyItem();
                     checkMerges();
                     spawnNewItem();
-                    
                     isDropping = false;
                     dropButton.disabled = isGameOver;
-                    
-                    // Batalkan animasi jatuh dan mulai kembali loop game utama
                     cancelAnimationFrame(dropAnimationFrame);
                     gameLoop(); 
                     return;
                 }
-                
-                // Jika belum mendarat, gambar item di posisi pixel yang baru
-                currentItem.y = currentPixelY / BLOCK_SIZE; // Update posisi float untuk digambar
-                draw(); // Gambar ulang seluruh scene
-                
-                // Lanjutkan ke frame berikutnya
+                currentItem.y = currentPixelY / BLOCK_SIZE;
+                draw();
                 dropAnimationFrame = requestAnimationFrame(animateDrop);
             }
-
             animateDrop();
         }
 
         function gameLoop() {
-            if(isDropping) return; // Jangan lakukan apa-apa jika sedang animasi jatuh
-
+            if(isDropping) return;
             if (!isGameOver) {
                 draw();
                 animationFrameId = requestAnimationFrame(gameLoop);
@@ -261,6 +266,8 @@
         }
 
         function solidifyItem() {
+            // Pastikan y adalah integer sebelum dimasukkan ke grid
+            currentItem.y = Math.round(currentItem.y);
             if (currentItem.y < ROWS) grid[currentItem.y][currentItem.x] = currentItem.type;
             if (currentItem.y < 1) isGameOver = true;
         }
@@ -271,22 +278,36 @@
                     const currentType = grid[r][c];
                     const aboveType = grid[r - 1][c];
                     let merged = false;
+                    let points = 0;
+
                     if (currentType !== ITEMS.EMPTY && currentType === aboveType) {
                         if (currentType === ITEMS.BOX) {
-                            grid[r][c] = ITEMS.KOPER; score += 5; merged = true;
+                            grid[r][c] = ITEMS.KOPER; points = 5; merged = true;
                         } else if (currentType === ITEMS.KOPER) {
-                            grid[r][c] = ITEMS.PESAWAT; score += 10; merged = true;
+                            grid[r][c] = ITEMS.PESAWAT; points = 10; merged = true;
                         } else if (currentType === ITEMS.PESAWAT) {
-                            score += 25;
+                            points = 25;
                             for (let row = r; row > 1; row--) { grid[row][c] = grid[row - 2] ? grid[row - 2][c] : ITEMS.EMPTY; }
                             grid[0][c] = ITEMS.EMPTY; grid[1][c] = ITEMS.EMPTY; merged = true;
                         }
+
                         if (merged) {
+                            score += points;
+                            // --- DIMODIFIKASI: Tambahkan objek skor baru ke array animasi ---
+                            floatingScores.push({
+                                text: `+${points}`,
+                                x: (c + 0.5) * BLOCK_SIZE, // Posisi X di tengah balok
+                                y: r * BLOCK_SIZE,         // Posisi Y di atas balok
+                                lifetime: 60,              // Durasi animasi (60 frame ~ 1 detik)
+                                alpha: 1.0                 // Mulai dengan terlihat jelas
+                            });
+
                             if (currentType !== ITEMS.PESAWAT) {
                                 for (let row = r - 1; row > 0; row--) { grid[row][c] = grid[row - 1][c]; }
                                 grid[0][c] = ITEMS.EMPTY;
                             }
-                            scoreDisplay.textContent = score; return checkMerges();
+                            scoreDisplay.textContent = score; 
+                            return checkMerges();
                         }
                     }
                 }
