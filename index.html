@@ -2,74 +2,146 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Petualangan Koper</title>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f8ff; /* Warna langit cerah */
+            background: linear-gradient(to bottom, #87CEEB, #f0f8ff); /* Gradient langit */
             font-family: 'Arial', sans-serif;
             flex-direction: column;
+            overflow: hidden; /* Mencegah scrolling */
+        }
+        h1 {
+            color: #1a237e;
+            text-shadow: 1px 1px 2px white;
+            margin: 10px 0;
+            font-size: 2em;
         }
         #game-container {
             position: relative;
-            border: 2px solid #333;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 2 / 1; /* Menjaga rasio canvas 2:1 */
+            border: 3px solid #1a237e;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         canvas {
             display: block;
-            background-color: #ffffff;
+            width: 100%;
+            height: 100%;
+            background: transparent; /* Canvas transparan untuk background parallax */
         }
         #score-board {
             position: absolute;
             top: 10px;
-            right: 10px;
+            right: 15px;
             font-size: 24px;
             font-weight: bold;
-            color: #333;
+            color: #1a237e;
+            text-shadow: 1px 1px 2px white;
         }
         #game-over-screen {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            transform: translate(-50%, -50%) scale(0.8);
+            background-color: rgba(0, 0, 0, 0.75);
             color: white;
             padding: 20px 40px;
-            border-radius: 10px;
+            border-radius: 15px;
             text-align: center;
-            display: none; /* Sembunyi secara default */
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #game-over-screen.show {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
         }
         #game-over-screen h2 {
             margin: 0 0 10px 0;
         }
         #restart-button {
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 12px 25px;
+            font-size: 18px;
             cursor: pointer;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             background-color: #4CAF50;
             color: white;
+            transition: background-color 0.2s;
         }
-        h1 {
-            color: #333;
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Tombol Kontrol Mobile */
+        #mobile-controls {
+            display: none; /* Sembunyi di desktop */
+            width: 100%;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            padding: 0 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            background-color: rgba(26, 35, 126, 0.5);
+            color: white;
+            border-radius: 50%;
+            border: 2px solid white;
+            font-size: 2.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .move-controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Tampilkan kontrol hanya di layar sentuh (mobile) */
+        @media (hover: none) and (pointer: coarse) {
+            #mobile-controls {
+                display: flex;
+            }
+            h1 { font-size: 1.5em; }
         }
     </style>
 </head>
 <body>
     <h1>Petualangan Koper 👜✈️</h1>
     <div id="game-container">
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
-        <div id="score-board">Skor: 0</div>
+        <canvas id="gameCanvas"></canvas> <div id="score-board">Skor: 0</div>
         <div id="game-over-screen">
             <h2>Game Over!</h2>
             <p>Skor Akhir: <span id="final-score">0</span></p>
             <button id="restart-button">Coba Lagi</button>
         </div>
+    </div>
+    <div id="mobile-controls">
+        <div class="move-controls">
+            <div id="left-btn" class="control-btn">‹</div>
+            <div id="right-btn" class="control-btn">›</div>
+        </div>
+        <div id="jump-btn" class="control-btn">↑</div>
     </div>
 
     <script>
@@ -81,6 +153,15 @@
         const finalScoreElem = document.getElementById('final-score');
         const restartButton = document.getElementById('restart-button');
 
+        // Mengatur ukuran canvas agar responsif
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
         // --- Variabel Game ---
         let score = 0;
         let gameSpeed = 5;
@@ -90,55 +171,110 @@
         const GRAVITY = 0.6;
         const GROUND_HEIGHT = 50;
 
-        // --- Aset Gambar (PENTING: Ganti URL ini dengan gambar Anda sendiri!) ---
-        const playerImg = new Image();
-        playerImg.src = 'https://yanoshijapan.github.io/asetonline/ckoper.png'; // Ganti dengan gambar wanita Anda
-
+        // --- Aset Gambar ---
+        const playerSprite = new Image();
+        playerSprite.src = 'https://i.ibb.co/d29p5k8/run-sprite-sheet.png'; // Ganti dengan SPRITE SHEET Anda
         const boxImg = new Image();
-        boxImg.src = 'https://yanoshijapan.github.io/asetonline/dus.png'; // Ganti dengan gambar tumpukan kardus
-
+        boxImg.src = 'https://yanoshijapan.github.io/asetonline/dus.png';
         const planeImg = new Image();
-        planeImg.src = 'https://yanoshijapan.github.io/asetonline/pesawat.png'; // Ganti dengan gambar pesawat
+        planeImg.src = 'https://yanoshijapan.github.io/asetonline/pesawat.png';
+        // Aset untuk Parallax Background
+        const bgLayer1 = new Image();
+        bgLayer1.src = 'https://i.ibb.co/sK46zBx/bg-clouds-1.png';
+        const bgLayer2 = new Image();
+        bgLayer2.src = 'https://i.ibb.co/qN9p5f2/bg-clouds-2.png';
 
-        // --- Objek Player ---
+        // --- Objek Background Parallax ---
+        class Layer {
+            constructor(image, speedModifier) {
+                this.x = 0;
+                this.y = 0;
+                this.width = canvas.width * 2;
+                this.height = canvas.height;
+                this.image = image;
+                this.speedModifier = speedModifier;
+                this.speed = gameSpeed * this.speedModifier;
+            }
+            update() {
+                this.speed = gameSpeed * this.speedModifier;
+                this.x -= this.speed;
+                if (this.x <= -this.width / 2) {
+                    this.x = 0;
+                }
+            }
+            draw() {
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                ctx.drawImage(this.image, this.x + this.width / 2, this.y, this.width, this.height);
+            }
+        }
+        const layer1 = new Layer(bgLayer1, 0.2); // Awan jauh, lebih lambat
+        const layer2 = new Layer(bgLayer2, 0.5); // Awan dekat, lebih cepat
+        const gameLayers = [layer1, layer2];
+
+        // --- Objek Player dengan Animasi Sprite ---
         const player = {
             x: 50,
             y: canvas.height - GROUND_HEIGHT - 60,
-            width: 70,  // Sesuaikan ukuran
-            height: 100, // Sesuaikan ukuran
-			speed: 5, // Tambahkan ini
-			velocityX: 0,
+            width: 70,  // Lebar collision box
+            height: 100, // Tinggi collision box
+            spriteWidth: 265, // Lebar SATU frame di sprite sheet
+            spriteHeight: 385, // Tinggi SATU frame di sprite sheet
+            speed: 5,
+            velocityX: 0,
             velocityY: 0,
             onGround: true,
+            frameX: 0,
+            maxFrame: 5, // Jumlah frame - 1 (jika ada 6 frame)
+            frameTimer: 0,
+            fps: 10,
+            frameInterval: 1000/10,
             draw() {
-                ctx.drawImage(playerImg, this.x, this.y, this.width, this.height);
+                ctx.drawImage(
+                    playerSprite,
+                    this.frameX * this.spriteWidth, 0, // Potong dari sprite sheet
+                    this.spriteWidth, this.spriteHeight,
+                    this.x, this.y, // Gambar di canvas
+                    this.width, this.height
+                );
             },
-            update() {
-				this.x += this.velocityX;
+            update(deltaTime) {
+                this.x += this.velocityX;
                 this.velocityY += GRAVITY;
                 this.y += this.velocityY;
 
-                // Mencegah jatuh melewati tanah
-				if (this.x < 0) {
-					this.x = 0;
-				}
+                if (this.x < 0) this.x = 0;
+                if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+
                 if (this.y > canvas.height - GROUND_HEIGHT - this.height) {
                     this.y = canvas.height - GROUND_HEIGHT - this.height;
                     this.velocityY = 0;
                     this.onGround = true;
                 }
+
+                // Animasi Sprite
+                if (this.onGround && this.velocityX !== 0) { // Animasi hanya saat di darat & bergerak
+                    if (this.frameTimer > this.frameInterval) {
+                        if (this.frameX < this.maxFrame) this.frameX++;
+                        else this.frameX = 0;
+                        this.frameTimer = 0;
+                    } else {
+                        this.frameTimer += deltaTime;
+                    }
+                } else if (this.velocityX === 0 && this.onGround) {
+                    this.frameX = 0; // Posisi diam jika berhenti
+                }
             },
             jump() {
                 if (this.onGround) {
-                    this.velocityY = -15; // Kekuatan lompatan
+                    this.velocityY = -15;
                     this.onGround = false;
                 }
             }
         };
 
-        // --- Kelas untuk Rintangan ---
+        // --- Kelas untuk Rintangan (Sama seperti sebelumnya) ---
         class Obstacle {
-            constructor(x, y, width, height, image) {
+             constructor(x, y, width, height, image) {
                 this.x = x;
                 this.y = y;
                 this.width = width;
@@ -155,25 +291,19 @@
 
         // --- Fungsi-Fungsi Game ---
         function spawnObstacle() {
-            // Munculkan rintangan secara acak
             if (frame % Math.floor(150 / (gameSpeed / 5)) === 0) {
                 const random = Math.random();
                 if (random > 0.6) {
-                    // Rintangan pesawat (di udara)
                     obstacles.push(new Obstacle(canvas.width, canvas.height - 180, 100, 50, planeImg));
                 } else {
-                    // Rintangan kardus (di darat)
                     obstacles.push(new Obstacle(canvas.width, canvas.height - GROUND_HEIGHT - 70, 60, 70, boxImg));
                 }
             }
         }
-
         function handleObstacles() {
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 obstacles[i].update();
                 obstacles[i].draw();
-
-                // Deteksi tabrakan
                 if (
                     player.x < obstacles[i].x + obstacles[i].width &&
                     player.x + player.width > obstacles[i].x &&
@@ -182,117 +312,108 @@
                 ) {
                     endGame();
                 }
-
-                // Hapus rintangan yang sudah lewat
                 if (obstacles[i].x + obstacles[i].width < 0) {
                     obstacles.splice(i, 1);
                 }
             }
         }
-        
         function drawGround() {
-            ctx.fillStyle = '#8B4513'; // Warna coklat tanah
+            ctx.fillStyle = '#8B4513';
             ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
         }
-
         function updateScore() {
             score++;
-            scoreBoard.textContent = `Skor: ${Math.floor(score / 5)}`; // Skor bertambah lebih lambat
-            
-            // Percepat permainan seiring waktu
-            if (score % 200 === 0) {
-                gameSpeed += 0.5;
-            }
+            scoreBoard.textContent = `Skor: ${Math.floor(score / 5)}`;
+            if (score % 200 === 0) gameSpeed += 0.5;
         }
 
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function gameLoop() {
+        let lastTime = 0;
+        function gameLoop(timestamp) {
             if (isGameOver) return;
             
-            clearCanvas();
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Gambar background parallax
+            gameLayers.forEach(layer => {
+                layer.update();
+                layer.draw();
+            });
+            
             drawGround();
-            
-            player.update();
+            player.update(deltaTime);
             player.draw();
-            
             spawnObstacle();
             handleObstacles();
-
             updateScore();
             
             frame++;
             requestAnimationFrame(gameLoop);
         }
-        
+
         function startGame() {
             isGameOver = false;
             score = 0;
             gameSpeed = 5;
             obstacles = [];
-            frame = 0;
+            player.x = 50;
             player.y = canvas.height - GROUND_HEIGHT - player.height;
             player.velocityY = 0;
-            
-            gameOverScreen.style.display = 'none';
+            gameOverScreen.classList.remove('show');
             scoreBoard.textContent = 'Skor: 0';
-            
-            gameLoop();
+            lastTime = 0;
+            gameLoop(0);
         }
 
         function endGame() {
             isGameOver = true;
             finalScoreElem.textContent = Math.floor(score / 5);
-            gameOverScreen.style.display = 'block';
+            gameOverScreen.classList.add('show');
         }
 
         // --- Event Listener ---
+        // Keyboard
         window.addEventListener('keydown', (e) => {
-			switch(e.code) {
-				case 'Space':
-				case 'ArrowUp': // Tambahkan panah atas untuk melompat
-					if (!isGameOver) player.jump();
-					break;
-				case 'ArrowRight':
-					player.velocityX = player.speed;
-					break;
-				case 'ArrowLeft':
-					player.velocityX = -player.speed;
-					break;
-			}
-		});
+            switch(e.code) {
+                case 'Space': case 'ArrowUp': if (!isGameOver) player.jump(); break;
+                case 'ArrowRight': player.velocityX = player.speed; break;
+                case 'ArrowLeft': player.velocityX = -player.speed; break;
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'ArrowRight': case 'ArrowLeft': player.velocityX = 0; break;
+            }
+        });
+        
+        // Mobile Controls
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const jumpBtn = document.getElementById('jump-btn');
 
-		window.addEventListener('keyup', (e) => {
-			switch(e.code) {
-				case 'ArrowRight':
-				case 'ArrowLeft':
-					player.velocityX = 0; // Berhenti bergerak saat tombol dilepas
-					break;
-			}
-		});
-        // Juga berfungsi dengan klik mouse atau sentuhan
-        canvas.addEventListener('mousedown', () => {
-			if (!isGameOver) player.jump();
-		});
-
+        leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); player.velocityX = -player.speed; });
+        leftBtn.addEventListener('touchend', (e) => { e.preventDefault(); player.velocityX = 0; });
+        rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); player.velocityX = player.speed; });
+        rightBtn.addEventListener('touchend', (e) => { e.preventDefault(); player.velocityX = 0; });
+        jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (!isGameOver) player.jump(); });
+        
         restartButton.addEventListener('click', startGame);
 
-        // --- Memulai Game ---
-        // Tunggu semua gambar dimuat sebelum memulai
         let imagesLoaded = 0;
-        const totalImages = 3;
+        const totalImages = 5; // Sekarang ada 5 gambar
         const onImageLoad = () => {
             imagesLoaded++;
             if (imagesLoaded === totalImages) {
                 startGame();
             }
         };
-
-        playerImg.onload = onImageLoad;
+        playerSprite.onload = onImageLoad;
         boxImg.onload = onImageLoad;
         planeImg.onload = onImageLoad;
+        bgLayer1.onload = onImageLoad;
+        bgLayer2.onload = onImageLoad;
     </script>
 </body>
 </html>
