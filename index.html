@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gudang Jatuh V2.4</title>
+    <title>Drop n Drop</title>
     <style>
         :root {
             --primary-bg: #ffffff;
@@ -21,7 +21,10 @@
         }
         #game-container {
             width: 100%; max-width: 400px; aspect-ratio: 9 / 16; position: relative;
-            background-color: var(--primary-bg); border-radius: 15px;
+            background: linear-gradient(45deg, #e6f7ff, #fdf8e1, #e6f7ff, #fdf8e1);
+            background-size: 400% 400%;
+            animation: animateGradient 15s ease infinite;
+            border-radius: 15px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column;
             overflow: hidden; border: 1px solid var(--border-color);
         }
@@ -52,8 +55,8 @@
             justify-content: center; align-items: center; text-align: center;
             color: var(--text-color); z-index: 10;
         }
-        .overlay h1 { font-size: 2.5em; margin-bottom: 20px; }
-        .overlay p { font-size: 1.2em; margin-bottom: 30px; }
+        .overlay h1 { font-size: 2.0em; margin-bottom: 20px; }
+        .overlay p { font-size: 0.8em; margin-bottom: 30px; }
         .button {
             padding: 15px 30px; font-size: 1.2em; font-weight: bold; color: #fff;
             background-color: var(--danger-color); border: none; border-radius: 10px;
@@ -61,6 +64,11 @@
         }
         .button:hover { background-color: #c82333; }
         .hidden { display: none; }
+        @keyframes animateGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
     </style>
 </head>
 <body>
@@ -69,7 +77,7 @@
         <div id="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
         <div id="controls"><button id="drop-button">JATUHKAN</button></div>
         <div id="start-screen" class="overlay">
-            <h1>Gudang Jatuh V2.4</h1>
+            <h1>Drop n Drop</h1>
             <p>Atur posisi barang, lalu jatuhkan untuk menggabungkannya!</p>
             <button id="start-button" class="button" style="background-color: #28a745;">Mulai Game</button>
         </div>
